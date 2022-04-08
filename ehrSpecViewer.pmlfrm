@@ -1,0 +1,506 @@
+------------------------------------------------------------------------
+--
+-- 	File:          ehrSpecViewer.pmlfrm
+--  Type:          Form Definition
+--  Group:         Report/list
+--  Keyword:     
+--  Module:        common
+--  Replaces:
+--
+--  Author:        Emin Hasanov
+--  Created:       07 april 2022         
+--
+--	Version:	   1.1
+-- Description:
+-- Collects Pipe Specs and shows spec components representation(if ehrScomViewer.pmlfrm is available)
+--
+------------------------------------------------------------------------
+--
+-- Methods defined:
+--
+--  Method call                      		Return              Description
+--  ===========                      		======              ===========
+--  ehrSpecViewer()                  		 -                   Constructor
+--  AvailableSelectors(SPECIFICATION)		 -                   Collects all 'headings' 
+--  SetActiveButton(STRING,BOOLEAN)          -                   Sets buttons active if similar 'heading' is available
+--  CollectSpecs()                   		 -                   Collects all specs like a ref and transform them to SPECIFICATION object
+--	SpecSelected()							 -					 Listener to slection of option
+--	SetFromIcon(STRING)						 -					 Listener for buttons. 
+--	FillList(Array,String)  				 -					 Collect information about scoms and fill list
+--	ChoiceChanged							 -					 Listener to componentList
+--  WriteToCommandWindow(String)			 -					 Paste information about selected element to command window
+--	AddToView								 - 					 Add to Main View pipes which uses selected component
+--	Quitcall								 -					 Overwrites close method
+--
+
+
+setup form !!ehrSpecViewer dialog dock right
+	title 'Spec viwer'
+	!this.Quitcall = '!this.Quitcall()'
+	frame .f1 'Specs' anchor r + l + t
+		option .specList 'Available Specs' anchor r + l callback |!this.SpecSelected()| width 29 
+	exit
+	
+	path down
+	frame .f2 'Icons'  anchor r + l + t width 50
+		frame .componentFrame 'Standard Components' anchor all
+		  button .FLAN     pixmap "AvevaSharedIcons>ID_FLAN>32"    tooltip 'Flange'       callback |!this.SetFromIcon('FLAN')|
+		  path right hdist 1
+		  button .ELBO     pixmap "AvevaSharedIcons>ID_ELBO>32"    tooltip 'Elbow'       callback |!this.SetFromIcon('ELBO')|
+		  button .TEE       PIXMAP "AvevaSharedIcons>ID_TEE>32"                 tooltip 'Tee'        callback |!this.SetFromIcon('TEE')|
+		  button .REDU      PIXMAP "AvevaSharedIcons>ID_REDU>32"  width 32 height 32 tooltip 'Reducer'      callback |!this.SetFromIcon('REDU')|
+		  button .VALV     PIXMAP "AvevaSharedIcons>ID_VALV>32"  width 32 height 32 tooltip 'Valve'        callback |!this.SetFromIcon('VALV')|
+		  button .ATTA       PIXMAP "AvevaSharedIcons>ID_ATTA>32"  width 32 height 32 tooltip 'Attachment'     callback |!this.SetFromIcon('ATTA')|
+		  button .PCOM       PIXMAP "AvevaSharedIcons>ID_PCOM>32"  width 32 height 32 tooltip 'Pcom'     callback |!this.SetFromIcon('PCOM')|
+
+		  button .WELD  PIXMAP "AvevaSharedIcons>ID_WELD>32" width 32 height 32 tooltip 'Weld'       callback |!this.SetFromIcon('WELD')|
+		  button .BEND  PIXMAP "AvevaSharedIcons>ID_BEND>32"  width 32 height 32 tooltip 'Pipe Bend'       callback |!this.SetFromIcon('BEND')|
+		  button .OLET at xmin.FLAN ymax PIXMAP "AvevaSharedIcons>ID_OLET>32"  width 32 height 32 tooltip 'Olet'        callback |!this.SetFromIcon('OLET')|
+		  button .COUP  PIXMAP "AvevaSharedIcons>ID_COUP>32"  width 32 height 32 tooltip 'Coupling'        callback |!this.SetFromIcon('COUP')|
+		  button .INST PIXMAP "AvevaSharedIcons>ID_INST>32"  width 32 height 32 tooltip 'Instrument'     callback |!this.SetFromIcon('INST')|
+		  button .CAP  PIXMAP "AvevaSharedIcons>ID_CAP>32" width 32 height 32 tooltip 'Cap'        callback |!this.SetFromIcon('CAP')|
+		  button .GASK PIXMAP "AvevaSharedIcons>ID_GASK>32" width 32 height 32 tooltip 'Gasket'       callback |!this.SetFromIcon('GASK')|
+		exit
+		path down
+		frame .additionalComponents  |Additional Components| anchor all
+		  button .FILT at xmin.FLAN PIXMAP "AvevaSharedIcons>ID_FILT>32"  width 32 height 32 tooltip 'Filter'        callback |!this.SetFromIcon('FILT')|
+		  path right hdist 1
+		  button .CROS PIXMAP "AvevaSharedIcons>ID_CROS>32" width 32 height 32 tooltip 'Cross'       callback |!this.SetFromIcon('CROS')|
+		  button .UNIO PIXMAP "AvevaSharedIcons>ID_UNIO>32"  width 32 height 32 tooltip 'Union'        callback |!this.SetFromIcon('UNIO')|
+		  button .VTWA PIXMAP "AvevaSharedIcons>ID_VTWA>32"  width 32 height 32 tooltip 'Three Way Valve'     callback |!this.SetFromIcon('VTWA')|
+		  button .CLOS PIXMAP "AvevaSharedIcons>ID_CLOS>32"  width 32 height 32 tooltip 'Closure'       callback |!this.SetFromIcon('CLOS')|
+		  button .FBLI  PIXMAP "AvevaSharedIcons>ID_FBLI>32" width 32 height 32 tooltip 'Blind Flange' callback |!this.SetFromIcon('FBLI')|
+		  button .TRAP PIXMAP   "AvevaSharedIcons>ID_TRAP>32"  width 32 height 32 tooltip 'Trap' callback |!this.SetFromIcon('TRAP')|
+
+		  button .LJSE  PIXMAP "AvevaSharedIcons>ID_LJSE>32"  width 32 height 32 tooltip 'Lap Joint Stub End' callback |!this.SetFromIcon('LJSE')|
+		  button .FTUB  PIXMAP   "AvevaSharedIcons>ID_FTUB>32"  width 32 height 32 tooltip 'Fixed Length Tube' callback |!this.SetFromIcon('FTUB')|
+		  button .VFWA at xmin.FILT ymax PIXMAP   "AvevaSharedIcons>ID_VFWA>32"  width 32 height 32 tooltip 'Four Way Valve' callback |!this.SetFromIcon('VFWA')|
+
+		exit
+		
+	exit
+	path down
+	frame .frameList 'components' anchor all at xmin.f1
+		list .componentList anchor all callback |!this.choiceChanged()| single zerosel width 48 len 10		
+	exit
+	
+	!menu = !this.newMenu(|componentListMenu|)
+	!menu.add(|callback|, |Write spref to command window|, |!this.WriteToCommandWindow('spref')|)
+	!menu.add(|callback|, |Write catref to command window|, |!this.WriteToCommandWindow('catref')|)
+	!menu.add(|callback|, |Add to view all pipes used this component|, |!this.AddToView()|)
+	
+	member .specCollection is Array
+	member .specCollectionName is Array
+	member .scomCollection is Array
+	member .selectorHeadings is Array
+	member .gadgetList is Array
+	member .spec is SPECIFICATION
+	member .componentDatasCollection is Array
+	member .scom is DBREF
+	member .isScomViewerExist is Boolean
+exit
+
+
+
+----------------------------------------------------------------------------------------------
+--
+-- Method:      ehrSpecViewer
+--
+-- Description: Constructor
+--
+-- Method Type: Procedure
+--   [#] [R/RW] [Data Type] 		  [Description]
+--    
+-- Return:
+--   [Data Type] [Description]
+--   
+--
+----------------------------------------------------------------------------------------------
+define method .ehrSpecViewer()
+	
+	!this.isScomViewerExist = true				$* Flag to know - exist ehrScomViewer.pmlfrm or not
+	show !!ehrScomViewer						$* When !this form first time called we must call second form and hide it
+	handle any
+		!this.isScomViewerExist = false
+	endhandle
+	if(!this.isScomViewerExist) then
+		!!ehrScomViewer.hide()
+	endif
+
+	--------------------------------------
+	-- Clears collections
+	--------------------------------------
+	!this.componentDatasCollection.clear()
+	!this.componentList.clear()
+	
+	--------------------------------------
+	-- Create collections of spec's headings
+	-- and gadgets
+	--------------------------------------
+	!selectorHeadingsName = 'FLAN ELBO TEE REDU VALV ATTA PCOM WELD BEND OLET COUP INST CAP GASK FILT CROS UNIO VTWA CLOS FBLI TRAP LJSE FTUB VFWA'
+	!this.selectorHeadings = !selectorHeadingsName.split()
+	!this.gadgetList = !!ehrSpecViewer.gadgets()
+
+	--------------------------------------
+	-- Calls method which collect specs
+	-- and fill option box
+	--------------------------------------
+	!this.CollectSpecs()	
+	!this.specList.Dtext = !this.specCollectionName
+	
+	--------------------------------------
+	-- Create collections of headings
+	-- and set them to list
+	--------------------------------------
+	!headingFull = 'stype sizes description material spref catref boltref'
+	!heading = !headingFull.split()
+	!this.componentList.SetHeadings(!heading)
+	
+	
+	!this.AvailableSelectors(!this.specCollection[1])
+	!this.spec = !this.specCollection[1]
+	
+endmethod
+
+
+----------------------------------------------------------------------------------------------
+--
+-- Method:      CollectSpecs
+--
+-- Description: Collects spec refs (only for pipe), convert them to SPEC and append to array
+--
+-- Method Type: Procedure
+--   [#] [R/RW] [Data Type] 		  [Description]
+--    
+-- Return:
+--   [Data Type] [Description]
+--   
+--
+----------------------------------------------------------------------------------------------
+define method .CollectSpecs()
+	var !specRefs collect all spec with (purp eq 'PIPE')
+	do !i values !specRefs
+		!spec = object SPECIFICATION(object DBREF(!i))
+		!this.specCollection.append(!spec)
+		!this.specCollectionName.append(!spec.name)	
+	enddo
+	
+endmethod
+
+
+--------------------------------------------------------------------------------------
+--
+-- Method:      AvailableSelectors
+--
+-- Description: Get 'headings' of spec and compare the with buttons (pipe component's)
+--
+-- Method Type: Procedure
+--   [#] [R/RW] [Data Type] 		  [Description]
+--    1   R      SPECIFICATION        Spec oject to take the headings
+-- Return:
+--   [Data Type] [Description]
+--   
+--
+--------------------------------------------------------------------------------------
+define method .AvailableSelectors(!spec is SPECIFICATION)
+	
+	 --q var !spec.selectors
+		 
+	!blockVar = object BLOCK ('!spec.Selectors[!Evalindex].Tanswer')	 
+	!tanswers = !spec.Selectors.Evaluate(!blockVar)
+
+	 do !i values !this.selectorHeadings	 
+		!index = !tanswers.FindFirst(!i)
+		if(!index.unset()) then
+			!this.SetActiveButton(!i, false)
+		else
+			!this.SetActiveButton(!i, true)
+		endif
+	 enddo
+	 
+	 
+endmethod
+
+
+--------------------------------------------------------------------------------------
+--
+-- Method:      SetActiveButton
+--
+-- Description: Set button active or deactive
+--
+-- Method Type: Procedure
+--   [#] [R/RW] [Data Type] 		  [Description]
+--    1   R      String        		  Button name to compare with gadget tags
+--	  2   R      Boolean        	  Active/Deactive flag
+-- Return:
+--   [Data Type] [Description]
+--   
+--
+--------------------------------------------------------------------------------------
+define method .SetActiveButton(!buttonName is String, !isActive is Boolean)
+	 --$p $!buttonName
+	 
+	 !blockVar = object BLOCK ('!this.gadgetList[!Evalindex].tag')	 
+	 !tagNames = !this.gadgetList.Evaluate(!blockVar)
+	 !index = !tagNames.FindFirst(!buttonName)
+	 
+	!this.gadgetList[!index].active = !isActive
+	handle any
+	endhandle
+	
+endmethod
+
+
+--------------------------------------------------------------------------------------
+--
+-- Method:      SpecSelected
+--
+-- Description: Get selected spec name from option gadget, convert it to SPEC
+--
+-- Method Type: Procedure
+--   [#] [R/RW] [Data Type] 		  [Description]
+--    
+-- Return:
+--   [Data Type] [Description]
+--   
+--
+--------------------------------------------------------------------------------------
+define method .SpecSelected()
+	!this.componentDatasCollection.clear()
+	!selected = !this.specList.Selection()
+	!spec = object SPECIFICATION(object DBREF(!selected))
+	
+	!this.AvailableSelectors(!spec)
+	!this.spec = !spec
+endmethod
+
+
+--------------------------------------------------------------------------------------
+--
+-- Method:      SetFromIcon
+--
+-- Description: Collect SPCO from heading
+--
+-- Method Type: Procedure
+--   [#] [R/RW] [Data Type] 		  [Description]
+--    1   R 	  STRING				Type of searched component
+-- Return:
+--   [Data Type] [Description]
+--   
+--
+--------------------------------------------------------------------------------------
+define method .SetFromIcon(!type is string)
+	!this.componentList.clear()
+	!this.componentDatasCollection.clear()
+	!blockVar = object BLOCK ('!this.spec.Selectors[!Evalindex].Tanswer')	 
+	!tanswers = !this.spec.Selectors.Evaluate(!blockVar)
+	
+	!index = !tanswers.FindFirst(!type)
+	var !spco collect all spco for $!this.spec.Selectors[$!index]
+	--q var !spco
+	
+	!this.FillList(!spco, !tanswers[!index])
+	
+endmethod
+
+
+--------------------------------------------------------------------------------------
+--
+-- Method:      FillList
+--
+-- Description: Fills list of components
+--
+-- Method Type: Procedure
+--   [#] [R/RW] [Data Type] 		  [Description]
+--	  1   R 	  Array					Array of spco
+--    2   R 	  STRING				Type of searched component
+-- Return:
+--   [Data Type] [Description]
+--   
+--
+--------------------------------------------------------------------------------------
+define method .FillList(!spco is Array, !type is String)
+	
+	
+	do !i values !spco
+		!tempSpco = object Dbref(!i)
+		!data[1] = !type
+		!data[2] = ''
+		!hasThirdPoint = true
+		!p1bore = p1bore of $!tempSpco.catr
+		!p2bore = p2bore of $!tempSpco.catr
+		
+		!p3bore = p3bore of $!tempSpco.catr
+		handle any
+			!hasThirdPoint = false
+		endhandle
+			
+		if(!p1bore.eq(!p2bore)) then
+			
+			if(!hasThirdPoint) then
+				if(!p3bore.unset().not()) then
+					!data[2] = '$!p1bore' + ' x ' + '$!p3bore'
+				else
+					!data[2] = '$!p1bore'
+				endif	
+			else
+				!data[2] = '$!p1bore'
+			endif	
+			
+		else	
+			!data[2] = '$!p1bore' + ' x ' + '$!p2bore'
+		endif
+		
+		
+		
+		!data[3] = dtxr of $!tempSpco
+		handle any
+			!data[3] = rtext of $!tempSpco
+			handle any
+				!data[3] = 'unset'
+			endhandle
+		endhandle
+		!data[4] =  mtxx of $!tempSpco
+		handle any
+			!data[4] = 'unset'
+		endhandle
+		
+		
+		!data[5] = '$!tempSpco.name'
+		!data[6] = name of $!tempSpco.catr	
+		!bltsetname = ''
+		!temp = blrfa[1] of $!tempSpco.catr	
+		handle any
+			!bltsetname = 'unset'
+		endhandle
+		if(!bltsetname.neq('unset')) then
+			!bltsetname = !temp.name
+			handle any
+				!bltsetname = '$!temp'
+			endhandle
+		endif
+		
+		!data[7] = '$!bltsetname'
+
+		!this.componentDatasCollection.append(!data)	
+	enddo
+	
+	!this.componentList.SetRows(!this.componentDatasCollection)
+	
+	!this.componentList.setPopup(!this.componentListMenu)
+endmethod
+
+--------------------------------------------------------------------------------------
+--
+-- Method:      choiceChanged
+--
+-- Description: Shows view and refresh it
+--
+-- Method Type: Procedure
+--   [#] [R/RW] [Data Type] 		  [Description]
+-- 
+-- Return:
+--   [Data Type] [Description]
+--   
+--
+--------------------------------------------------------------------------------------
+define method .choiceChanged()
+	!index = !this.componentList.val
+	!catr = !this.componentDatasCollection[!index][6]
+	!this.scom = object DBREF(!catr)
+	if(!this.isScomViewerExist) then
+		!!ehrScomViewer.Init()
+	endif
+	
+endmethod
+
+
+--------------------------------------------------------------------------------------
+--
+-- Method:      WriteToCommandWindow
+--
+-- Description: Paste catref or spref to command window
+--
+-- Method Type: Procedure
+--   [#] [R/RW] [Data Type] 		  [Description]
+-- 	  1   R		 String				   Catref or Spref		
+-- Return:
+--   [Data Type] [Description]
+--   
+--
+--------------------------------------------------------------------------------------
+define method .WriteToCommandWindow(!element is string)
+	!index = !this.componentList.val
+	if(!element.eq('spref')) then	
+		!spref = !this.componentDatasCollection[!index][5]
+		$p $!spref
+	else
+		!catr = !this.componentDatasCollection[!index][6]
+		$p $!catr
+	endif
+	
+endmethod
+
+
+--------------------------------------------------------------------------------------
+--
+-- Method:      AddToView
+--
+-- Description: Add to Main view pipes which uses selected components
+--
+-- Method Type: Procedure
+--   [#] [R/RW] [Data Type] 		  [Description]
+		
+-- Return:
+--   [Data Type] [Description]
+--   
+--
+--------------------------------------------------------------------------------------
+define method .AddToView()
+	!index = !this.componentList.val
+	
+	!spref = !this.componentDatasCollection[!index][5]
+	!type = !this.componentDatasCollection[!index][1]
+	var !pipeComp collect all $!type with spref eq $!spref
+	
+	if(!pipeComp.size().eq(0)) then
+		!!alert.Error('No pipe found')
+		return
+	endif
+	
+	!uniquePipe[1] = ''
+	do !i values !pipeComp
+		!pipe = !i.dbref().name
+		!index = !uniquePipe.FindFirst(!pipe)
+		if(!index.unset()) then
+			!uniquePipe.append(!pipe)
+			add $!pipe
+		endif	
+	enddo
+	
+	
+endmethod
+
+--------------------------------------------------------------------------------------
+--
+-- Method:      Quitcall
+--
+-- Description: Kills form
+--
+-- Method Type: Procedure
+--   [#] [R/RW] [Data Type] 		  [Description]
+-- 
+-- Return:
+--   [Data Type] [Description]
+--   
+--
+--------------------------------------------------------------------------------------
+define method .Quitcall()
+	
+	--kill !!ehrSpecViewer
+	!this.componentList.clear()
+	!this.componentDatasCollection.clear()
+	!!ehrSpecViewer.hide()
+	!!ehrScomViewer.hide()
+	
+endmethod
